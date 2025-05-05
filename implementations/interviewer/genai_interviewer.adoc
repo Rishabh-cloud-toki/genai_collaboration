@@ -1,0 +1,182 @@
+= AI Agents Design Documentation
+
+== Objective
+
+Design and implement three AI-powered agents to automate the technical interview pipeline for hiring. These agents work collaboratively to:
+
+1. **Agent 1 - IntelliQuest**: Conduct contextual interviews based on a candidate's resume and generate detailed interview transcripts.
+2. **Agent 2 - TalentScout**: Use a Retrieval-Augmented Generation (RAG) pipeline to scan resumes and shortlist the top candidates based on user-defined requirements. It can trigger a tool to schedule interviews.
+3. **Agent 3 - MatchMaker**: Analyze interview outcomes, rate candidates, and provide a comparative analysis to help make final hiring decisions.
+
+== High-Level Solution
+
+=== IntelliQuest (Agent 1 - Interviewer)
+
+*Inputs*: Resume, role/context (e.g., "Java Backend Developer with 6 years experience"), and optionally a list of focus areas.
+
+*Functionality*:
+
+* Parses the resume and identifies relevant topics.
+* Conducts a multi-turn interview, tracking both agent and user responses.
+* Stores a detailed transcript with:
+
+* All Q\&A exchanges
+* Expected answers
+* Commentary on correctness, depth, and clarity
+* Sends structured output to the MatchMaker agent for evaluation.
+
+=== TalentScout (Agent 2 - Sourcing)
+
+*Inputs*: Job description, technical and soft skill requirements, years of experience, etc.
+
+*Functionality*:
+
+* Uses RAG to search through a database of resumes.
+* Ranks resumes based on relevance and presents top 3–4 matches.
+* On user approval, invokes a scheduling tool (via a TOOL interface) to send interview invites.
+
+=== MatchMaker (Agent 3 - Matcher)
+
+*Inputs*: Transcripts and scoring metadata from IntelliQuest.
+
+*Functionality*:
+
+* Applies predefined scoring rules per category (e.g., Problem Solving, System Design, Communication).
+* Computes an overall rating.
+* Compares multiple interview results and explains trade-offs.
+* Produces a structured summary of best-fit candidates.
+
+== Component Diagrams (PlantUML)
+
+=== IntelliQuest (Agent 1)
+[plantuml, subs='attributes']
+----
+@startuml
+!include <C4/C4_Container>
+
+Person(candidate, "Candidate", "The person being interviewed")
+
+System_Boundary(intelliQuestBoundary, "IntelliQuest - Interviewing Agent") {
+    Container(ui, "Interview UI", "React/Angular", "Provides an interface for interview control and display")
+    Container(api, "IntelliQuest Backend", "Spring Boot", "Handles interview logic, state, and coordination")
+    Container(aiModel, "LLM Service", "Ollama/OpenAI", "Handles interview generation and response validation")
+    ContainerDb(db, "Interview DB", "PostgreSQL", "Stores transcripts, metadata, and feedback")
+    Container(tool, "Tool: Interview Transcript Exporter", "Python Script/API", "Exports transcript to downstream agents or formats")
+}
+
+Rel(candidate, ui, "Interacts with")
+Rel(ui, api, "Calls API")
+Rel(api, db, "Reads/Writes")
+Rel(api, aiModel, "Sends context & gets interview Q&A")
+Rel(api, tool, "Sends complete interview data")
+@enduml
+
+----
+
+
+==== IntelliQuest C4 Diagram (Summary)
+
+This diagram illustrates the components of the IntelliQuest agent that manages AI-driven interviews.
+
+*Actor*: Candidate - Interacts with the UI to take the interview.
+
+*Containers*:
+- Interview UI (React/Angular): Frontend for interview interaction.
+- IntelliQuest Backend (Spring Boot): Manages flow and logic.
+- LLM Service (Ollama/OpenAI): Generates and evaluates questions.
+- Interview DB (PostgreSQL): Stores all session data.
+- Transcript Exporter Tool: Sends final transcript to other systems.
+
+*Relationships*:
+- Candidate → UI → Backend → DB/LLM/Tool.
+
+
+=== TalentScout (Agent 2)
+
+[plantuml, subs='attributes']
+----
+@startuml
+!include <C4/C4_Container>
+
+Person(user, "User", "Defines job requirements")
+
+System_Boundary(talentScoutBoundary, "TalentScout - Sourcing Agent") {
+    Container(ui, "Sourcing UI", "React/Angular", "Interface to enter job requirements")
+    Container(api, "TalentScout Backend", "Spring Boot", "Processes job queries and ranks candidates")
+    Container(rag, "RAG Pipeline", "LLM + Vector DB", "Retrieves and ranks resumes")
+    Container(tool, "Tool: Scheduler", "API/Script", "Sends interview invites to candidates")
+    ContainerDb(db, "Resume DB", "PostgreSQL/VectorDB", "Stores indexed resumes")
+}
+
+Rel(user, ui, "Provides hiring criteria")
+Rel(ui, api, "Submits query")
+Rel(api, rag, "Performs semantic search")
+Rel(rag, db, "Fetches resumes")
+Rel(api, tool, "Triggers email scheduling")
+@enduml
+----
+
+==== TalentScout C4 Diagram (Summary)
+
+*Actor*: User - Inputs hiring requirements.
+
+*Containers*:
+- Sourcing UI: Frontend for entering job descriptions.
+- TalentScout Backend: Handles logic and coordination.
+- RAG Pipeline: Finds matching resumes using LLM + Vector DB.
+- Resume DB: Stores candidate data.
+- Scheduler Tool: Sends out interview invites.
+
+*Relationships*:
+- User → UI → Backend → RAG → Resume DB
+- Backend → Scheduler Tool
+
+
+=== MatchMaker (Agent 3)
+
+[plantuml, subs='attributes']
+----
+@startuml
+!include <C4/C4_Container>
+
+Person(user, "User", "Inputs interview ID")
+
+System_Boundary(matchMakerBoundary, "MatchMaker - Evaluation Agent") {
+    Container(ui, "MatchMaker UI", "React/Angular", "User interface to input interview ID")
+    Container(api, "MatchMaker Service", "Spring Boot", "Applies scoring logic and comparisons")
+    Container(engine, "Scoring Engine", "Rule-based/ML", "Evaluates interview performance")
+    Container(report, "Report Generator", "Template Engine", "Produces summary insights")
+    ContainerDb(db, "Interview Transcript DB", "PostgreSQL", "Receives data from IntelliQuest")
+    Container(tool, "Tool: Transcript Fetcher", "API/Script", "Fetches transcript by interview ID")
+}
+
+Rel(user, ui, "Inputs interview ID")
+Rel(ui, api, "Inputs interview ID")
+Rel(api, tool, "Fetches transcript")
+Rel(tool, db, "Reads transcripts")
+Rel(api, engine, "Sends data for scoring")
+Rel(engine, report, "Provides scored output")
+@enduml
+
+----
+
+==== MatchMaker C4 Diagram (Summary)
+
+
+### MatchMaker (Agent 3) - Evaluation Agent
+
+**Actor**: User
+- Inputs the interview ID.
+
+**Containers**:
+- **MatchMaker Service**: Coordinates the fetching of transcripts and scoring logic.
+- **Scoring Engine**: Applies rule-based or ML models to evaluate interview performance.
+- **Interview Transcript DB**: Stores interview transcripts from IntelliQuest.
+- **Report Generator**: Prepares the final report with scoring and insights.
+- **Transcript Fetcher Tool**: Fetches the interview transcript based on the provided interview ID.
+
+**Relationships**:
+- UI → Service → Transcript Fetcher → DB → Scoring Engine → Report Generator
+
+
+
