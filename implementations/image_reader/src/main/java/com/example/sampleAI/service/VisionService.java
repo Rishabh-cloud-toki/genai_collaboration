@@ -1,6 +1,8 @@
 package com.example.sampleAI.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -19,6 +21,7 @@ import java.util.Map;
 import java.util.List;
 
 @Service
+@Slf4j
 public class VisionService {
 
     @Value("${spring.ai.openai.api-key}")
@@ -30,14 +33,8 @@ public class VisionService {
         this.restTemplate = restTemplateBuilder.build();
     }
 
-    /**
-     * Reads the given image file, sends it to the GPT-4 Vision preview model,
-     * and returns the model's textual description of the image.
-     * @param file the image file to analyze
-     * @return the model's description of the image
-     * @throws IOException if an I/O error occurs reading the file
-     */
     public String analyzeImage(File file) throws IOException {
+        log.info("Received request to analyze image");
         byte[] data = Files.readAllBytes(file.toPath());
         String base64 = Base64.getEncoder().encodeToString(data);
 
@@ -71,6 +68,8 @@ public class VisionService {
             requestEntity,
             JsonNode.class
         );
+
+        log.info("Response from chat completion :: {}", response);
         JsonNode root = response.getBody();
         return root.get("choices").get(0).get("message").get("content").asText();
     }

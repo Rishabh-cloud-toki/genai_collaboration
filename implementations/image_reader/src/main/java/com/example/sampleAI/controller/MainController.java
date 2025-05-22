@@ -38,19 +38,13 @@ public class MainController {
         return ResponseEntity.ok(conversationId);
     }
 
-    /**
-     * Endpoint to analyze an uploaded image and generate a description using the AI service.
-     * @param file the uploaded image file
-     * @return generated description
-     * @throws IOException if an I/O error occurs processing the file
-     */
     @PostMapping("/from-image")
     public ResponseEntity<String> fromImage(@RequestParam("file") MultipartFile file) throws IOException {
+        log.info("Request to read image :: {}", file);
         File imageFile = File.createTempFile("img", ".tmp");
         file.transferTo(imageFile);
-        // Call GPT-4 Vision preview to get a description directly
         String description = visionService.analyzeImage(imageFile);
-        imageFile.delete();
+        log.info("Description of image :: {}", description);
         return ResponseEntity.ok(description);
     }
 }
