@@ -1,6 +1,7 @@
 package com.example.sampleAI.service;
 
 import com.example.sampleAI.type.Role;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -14,12 +15,10 @@ import java.util.List;
 import static com.example.sampleAI.type.Role.*;
 
 @Service
+@RequiredArgsConstructor
 public class SessionManager {
 
     private final ChatMemory chatMemory;
-    SessionManager() {
-        this.chatMemory = new InMemoryChatMemory();
-    }
 
     public void addToMemory(String conversationId, String input, Role role) {
         if(role == USER) {

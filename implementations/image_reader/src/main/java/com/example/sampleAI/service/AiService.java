@@ -3,6 +3,7 @@ package com.example.sampleAI.service;
 import com.example.sampleAI.entity.ConversationRequest;
 import com.example.sampleAI.entity.ConversationResponse;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -21,15 +22,13 @@ import static com.example.sampleAI.type.Role.*;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class AiService {
 
-    @Autowired
-    OpenAiChatModel chatModel;
-    @Autowired
-    SessionManager sessionManager;
+    private final OpenAiChatModel chatModel;
+    private final SessionManager sessionManager;
     private OpenAiChatOptions options;
-    @Autowired
-    List<FunctionCallback> functionCallbacks;
+    private final List<FunctionCallback> functionCallbacks;
 
     @PostConstruct
     void configure() {
@@ -68,19 +67,5 @@ public class AiService {
         ChatResponse response = chatModel.call(prompt);
         log.info("Output from LLM {}", response);
         return response;
-    }
-    
-    /**
-     * Generates a single-turn response from the model for the given prompt.
-     * @param prompt the prompt text to send to the model
-     * @return the model's output text
-     */
-    public String generateFromPrompt(String prompt) {
-        ConversationRequest request = ConversationRequest.builder()
-                .conversationId(getConversationId())
-                .prompt(prompt)
-                .build();
-        ConversationResponse response = getResponse(request);
-        return response.getOutput();
     }
 }
